@@ -1,0 +1,71 @@
+{
+	"title": "Intro survey",
+	"forms": [{
+		"prompt": "= Welcome to SimSe\nSimSe is a tool that helps you manage the **information security** //in your company//.\n\nTo get you started, here are some simple questions."
+	},
+	{
+		"prompt": "Do you want to use the default configuration? (Good for trying out the app)",
+		"radio": [
+			{"label": "Yes", "set": {
+					"usedefault": 1,
+					"confclasses": 4,
+					"conf1": "Public",
+					"conf2": "Internal",
+					"conf3": "Confidential",
+					"conf4": "Secret"
+			}},
+			{"label": "No", "set": {"usedefault": 0}}]
+	},
+	{
+		"pre": {"usedefault": 0},
+		"prompt": "How many confidentiality classes (e.g., internal, confidential, secret) do you have (2 to 5)?",
+		"radio": [
+			{"label": "2", "set": {"confclasses": 2}},
+			{"label": "3", "set": {"confclasses": 3}},
+			{"label": "4", "set": {"confclasses": 4}},
+			{"label": "5", "set": {"confclasses": 5}}
+		]
+	},
+	{
+		"pre": {"usedefault": 0, "confclasses": 2},
+		"prompt": "Name the two confidentiality classes",
+		"text": [
+			{"label": "c0", "set": "conf1", "default": "public"},
+			{"label": "c1", "set": "conf2", "default": "internal"}
+		]
+	},
+	{
+		"pre": {"usedefault": 0, "confclasses": 3},
+		"prompt": "Name the three confidentiality classes",
+		"text": [
+			{"label": "c0", "set": "conf1", "default": "public"},
+			{"label": "c1", "set": "conf2", "default": "internal"},
+			{"label": "c2", "set": "conf3", "default": "secret"}
+		]
+	},
+	{
+		"pre": {"usedefault": 0, "confclasses": 4},
+		"prompt": "Name the three confidentiality classes",
+		"text": [
+			{"label": "c0", "set": "conf1", "default": "public"},
+			{"label": "c1", "set": "conf2", "default": "internal"},
+			{"label": "c2", "set": "conf3", "default": "confidential"},
+			{"label": "c3", "set": "conf4", "default": "secret"}
+		]
+	},
+	{
+		"pre": {"usedefault": 0, "confclasses": 5},
+		"prompt": "Name the three confidentiality classes",
+		"text": [
+			{"label": "c0", "set": "conf1", "default": "public"},
+			{"label": "c1", "set": "conf2", "default": "internal"},
+			{"label": "c2", "set": "conf3", "default": "confidential"},
+			{"label": "c3", "set": "conf4", "default": "highly confidential"},
+			{"label": "c4", "set": "conf4", "default": "secret"}			
+		]
+	},
+	{
+		"prompt": "= Thank you\n== for completing this journey\nThis is the last slide of this survey. I am pleased to see that you completed it. Everything will be fine now.\n\n//Thank you//\n\n//Good bye//"
+	}
+	]
+}
