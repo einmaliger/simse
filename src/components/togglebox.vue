@@ -29,7 +29,7 @@ export default {
       this.imgOff = '/static/box-unchecked.png'
     } else {
       this.imgOn = '/static/cross.png'
-      this.imgOff = '/static/box-unchecked.png'
+      this.imgOff = '/static/blank.png'
     }
   }
 }
