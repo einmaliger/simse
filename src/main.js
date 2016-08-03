@@ -1,8 +1,11 @@
 import '../node_modules/semantic-ui-css/semantic.min.css'
 import Vue from 'vue'
+import VueRouter from 'vue-router'
 import App from './App'
 /* eslint-disable no-unused-vars */
 import semantic from 'semantic'
+import Hello from './components/Hello'
+import Survey from './components/Survey'
 
 // very simple markdown to html converter. Tries to output correct HTML by not allowing many kinds of nesting.
 // Specifically, the order of nesting matters. For example '**//nesting//**'' works, but '//**nesting**//' doesn't.
@@ -28,8 +31,27 @@ Vue.filter('simpleMarkdown', function (markdown) {
     '</p>'
 })
 
-/* eslint-disable no-new */
-new Vue({
-  el: 'body',
-  components: { App }
+Vue.use(VueRouter)
+
+var router = new VueRouter()
+
+router.map({
+  '/': {
+    component: Hello
+  },
+  '/survey': {
+    component: Survey
+  }
 })
+
+const initialized = false
+
+router.beforeEach(function ({to, next, redirect}) {
+  if (!initialized && !_.startsWith(to.path, '/survey')) {
+    redirect('/survey?source=/static/intro.json')
+  } else {
+    next()
+  }
+})
+
+router.start(App, 'body')

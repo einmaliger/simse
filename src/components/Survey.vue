@@ -56,13 +56,6 @@ function isSubset (subset, superset) {
 
 export default {
   components: {ToggleBox},
-  props: {
-    // An url that is passed to $.get to retrieve the survey in the form of a JSON string
-    source: {
-      type: String,
-      required: true
-    }
-  },
   data () {
     return {
       loading: true,  // show the dimmer?
@@ -161,9 +154,17 @@ export default {
     }
   },
   created () {
-    // Load the form,  got to first question
+    const source = this.$route.query.source
+
+    if (_.isUndefined(source) || !_.isString(source) || source === '') {
+      this.text = '= Error\nNo survey was specified.'
+      this.loading = false
+      return
+    }
+
     // TODO: Load the last state and go to the first unanswered question
-    $.get(this.source)
+    // Load the form,  got to first question
+    $.get(source)
     .done((data) => {
       // Manually fill in all relevant fields
       this.survey = {title: data.title || '', forms: data.forms}

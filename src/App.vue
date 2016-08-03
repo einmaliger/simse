@@ -13,25 +13,12 @@
       <a class="item">Login <i class="user icon"></i></a>
     </div>
 
-    <img class="logo" src="./assets/logo.png">
-    <hello></hello>
-    <p>
-      Welcome to your Vue.js app!
-    </p>
-    <Survey source="static/intro.json"></Survey>
-
+    <router-view></router-view>
   </div>
 </template>
 
 <script>
-import Hello from './components/Hello'
-import Survey from './components/Survey'
-
 export default {
-  components: {
-    Hello,
-    Survey
-  }
 }
 </script>
 

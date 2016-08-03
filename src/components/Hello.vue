@@ -1,5 +1,9 @@
 <template>
   <div class="hello">
+    <img class="logo" src="../assets/logo.png">
+    <p>
+      Welcome to your Vue.js app!
+    </p>
     <h1><i class="de flag"></i>{{ msg }}</h1>
   </div>
 </template>

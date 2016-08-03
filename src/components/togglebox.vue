@@ -18,11 +18,6 @@ export default {
       imgOff: ''
     }
   },
-  computed: {
-    isChecked () {
-      return this.checked === undefined ? this.state : this.checked
-    }
-  },
   created () {
     if (this.type === 'check') {
       this.imgOn = '/static/box-checked.png'
