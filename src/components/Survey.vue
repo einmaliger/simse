@@ -5,9 +5,8 @@
       <div class="ui text loader">Loading Survey</div>
     </div>
 
-    <div class="ui progress" data-percent="74"><div class="bar"></div></div>
+    <div class="ui progress" data-percent="74" id="surveyprogress"><div class="bar"></div></div>
     <div class="label">{{state.idx}} of {{survey.forms.length-1}} ({{percentComplete}}) forms complete</div>
-
 
     <p>{{{text | simpleMarkdown}}}</p>
 
@@ -16,6 +15,15 @@
         <div v-for="item in textfields" class="column">
           {{item.label}}
           <input v-model="answers[$index+textAnswerIdx]" :default="item.default">
+        </div>
+      </div>
+      <div v-if="numberfields.length>0" class="one column row">
+        <div v-for="item in numberfields" class="column">
+          {{item.label}}
+          <div class="ui slider">
+            <div class="handle"></div>
+            <div class="value"></div>
+          </div>
         </div>
       </div>
       <div v-if="checkboxes.length>0" class="row">
@@ -67,6 +75,7 @@ export default {
       checkboxes: [],
       radioboxes: [],
       textfields: [],
+      numberfields: [],
       answers: []       // Answers to the questions of the current form
     }
   },
@@ -74,6 +83,9 @@ export default {
     // If the answers array contains text answers, this is the first index of them
     textAnswerIdx () {
       return this.checkboxes.length + (this.radioboxes.length > 0 ? 1 : 0)
+    },
+    numberAnswerIdx () {
+      return this.textAnswerIdx + this.textfields.length
     },
     canGoBack () { return !this.loading && this.state.idx > 0 },
     canGoNext () {
@@ -117,6 +129,13 @@ export default {
           }
         })
 
+        // Assign variables for the textfields
+        _.forEach(this.numberfields, (numberfield, index) => {
+          if (_.has(numberfield, 'set')) {
+            assignments[numberfield.set] = this.answers[index + this.numberAnswerIdx]
+          }
+        })
+
         // Assign variables for the selection of the radio button
         if (this.radioboxes.length > 0 && _.has(this.radioboxes[this.answers[this.checkboxes.length]], 'set')) {
           _.extend(assignments, this.radioboxes[this.answers[this.checkboxes.length]].set)
@@ -148,12 +167,15 @@ export default {
       this.checkboxes = form.check || []
       this.radioboxes = form.radio || []
       this.textfields = form.text || []
+      this.numberfields = form.number || []
       this.answers = _.fill(new Array(this.checkboxes.length), false)
       if (this.radioboxes.length > 0) { this.answers.$set(this.checkboxes.length, -1) }
       if (this.textfields.length > 0) { this.answers = _.extend(this.answers, _.map(form.text, (textfield) => textfield.default)) }
     }
   },
   created () {
+    $('#surveyprogress').progress()
+
     const source = this.$route.query.source
 
     if (_.isUndefined(source) || !_.isString(source) || source === '') {
