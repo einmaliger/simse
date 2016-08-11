@@ -1,52 +1,52 @@
 <template>
-  <div class="ui segment">
-    <!-- Spinner -->
-    <div class="ui inverted dimmer" v-bind:class="{'active': loading}">
-      <div class="ui text loader">Loading Survey</div>
+  <!-- Spinner -->
+  <div v-if="loading" class="loading">
+  Loading survey &#8230;
+  </div>
+
+  <progress class="progress" :value="percentComplete" max="100" id="surveyprogress"></progress>
+  <small>{{percentComplete}}% complete</small>
+
+  <p>{{{text | simpleMarkdown}}}</p>
+
+  <form>
+    <div v-if="textfields.length>0">
+      <div v-for="item in textfields" class="form-group">
+        <label for="'tf' + $index">{{item.label}}</label>
+        <input id="'tf' + $index" type="text" v-model="answers[$index+textAnswerIdx]" :default="item.default">
+      </div>
     </div>
-
-    <div class="ui progress" data-percent="74" id="surveyprogress"><div class="bar"></div></div>
-    <div class="label">{{state.idx}} of {{survey.forms.length-1}} ({{percentComplete}}) forms complete</div>
-
-    <p>{{{text | simpleMarkdown}}}</p>
-
-    <form>
-      <div v-if="textfields.length>0">
-        <div v-for="item in textfields" class="row">
-          <label for="'tf' + $index">{{item.label}}</label>
-          <input id="'tf' + $index" type="text" v-model="answers[$index+textAnswerIdx]" :default="item.default">
-        </div>
+    <div v-if="numberfields.length>0">
+      <div v-for="item in numberfields" class="form-group">
+        <label for="'nf' + $index">{{item.label}}</label>
+        <input id="'nf' + $index" type="number" number v-model="answers[$index+textAnswerIdx]" :min="item.min || 0" :max="item.max || 10" :value="item.default || item.min || 1">
       </div>
-      <div v-if="numberfields.length>0">
-        <div v-for="item in numberfields" class="row">
-          <label for="'nf' + $index">{{item.label}}</label>
-          <input id="'nf' + $index" type="number" number v-model="answers[$index+textAnswerIdx]" :min="item.min || 0" :max="item.max || 10" :value="item.default || item.min || 1">
-        </div>
+    </div>
+    <div v-if="checkboxes.length>0" class="row">
+      <div v-for="item in checkboxes" class="col-sm-6 form-check">
+        <toggle-box type="check" :label="item.label" :checked="answers[$index]" v-on:click="this.answers.$set($index, !this.answers[$index])"></toggle-box>
       </div>
-      <div v-if="checkboxes.length>0" class="row">
-        <div v-for="item in checkboxes" class="col-sm-6">
-          <toggle-box type="check" :label="item.label" :checked="answers[$index]" v-on:click="this.answers.$set($index, !this.answers[$index])"></toggle-box>
-        </div>
+    </div>
+    <div v-if="radioboxes.length>0" class="row">
+      <div v-for="item in radioboxes" class="col-sm-6 form-check">
+        <toggle-box type="radio" :label="item.label" :checked="answers[checkboxes.length] == $index" v-on:click="answers.$set(checkboxes.length, $index)"></toggle-box>
       </div>
-      <div v-if="radioboxes.length>0" class="row">
-        <div v-for="item in radioboxes" class="col-sm-6">
-          <toggle-box type="radio" :label="item.label" :checked="answers[checkboxes.length] == $index" v-on:click="answers.$set(checkboxes.length, $index)"></toggle-box>
-        </div>
-      </div>
-    </form>
-    <div class="row">
-      <div class="col-sm-6">
-        <button class="ui left labeled icon button" v-on:click="advancePage(-1)" v-bind:class="{'disabled': !canGoBack}">
-          <i class="left arrow icon"></i>
-          Back
-        </button>
-      </div>
-      <div class="col-sm-6">
-        <button class="ui right labeled icon button" v-on:click="advancePage(1)" v-bind:class="{'disabled': !canGoNext}" >
-          <i class="right arrow icon"></i>
-          Next
-        </button>
-      </div>
+    </div>
+  </form>
+  <div class="row">
+    <div class="col-sm-6">
+      <button type="button" class="btn btn-secondary" v-on:click="advancePage(-1)"
+        :disabled="!canGoBack">
+        <i class="fa fa-arrow-left" aria-hidden></i>
+        Back
+      </button>
+    </div>
+    <div class="col-sm-6">
+      <button type="button" class="btn btn-primary" v-on:click="advancePage(1)"
+        :disabled="!canGoNext">
+        Next
+        <i class="fa fa-arrow-right" aria-hidden></i>
+      </button>
     </div>
   </div>
 </template>
@@ -54,7 +54,7 @@
 <script>
 import ToggleBox from './togglebox'
 
-// for an array, the precondition is matched if any of the objects is completely contained in the state
+// Generic utility function that returns true, if the first object is a subset of the second object
 function isSubset (subset, superset) {
   return !(_.some(subset, (value, key) => !(_.has(superset, key) && superset[key] === value)))
 }
@@ -65,7 +65,8 @@ export default {
     return {
       loading: true,  // show the dimmer?
       survey: {title: '', forms: []},     // The complete survey
-      state: {idx: -1, answers: []},
+      state: {idx: -1, answers: []},      // The current state of the survey
+                                          // This is also the result
 
       // The elements of the current form
       text: '',     // Current form text
@@ -77,21 +78,32 @@ export default {
     }
   },
   computed: {
+    // If the answers array contains radio boxes, this is theindex of the selection
+    // Note: As this is always identical to this.checkboxes.length, this function is
+    // not needed. It is only here to make the code a bit more readable
+    radioAnswerIdx () { return this.checkboxes.length },
+
     // If the answers array contains text answers, this is the first index of them
     textAnswerIdx () {
-      return this.checkboxes.length + (this.radioboxes.length > 0 ? 1 : 0)
+      return this.radioAnswerIdx + (this.radioboxes.length > 0 ? 1 : 0)
     },
+
+    // If the answers array contains number answers, this is the first index of them
     numberAnswerIdx () {
       return this.textAnswerIdx + this.textfields.length
     },
+
     canGoBack () { return !this.loading && this.state.idx > 0 },
+
     canGoNext () {
       return !this.loading && this.state.idx < this.survey.forms.length - 1 &&      // there is a next page
       (this.radioboxes.length === 0 || this.answers[this.checkboxes.length] !== -1) // AND all mandatory fields are answered
     },
-    percentComplete () { return '' + Math.ceil(this.state.idx * 100 / (this.survey.forms.length - 1)) + '%' }
+
+    percentComplete () { return Math.ceil(this.state.idx * 100 / (this.survey.forms.length - 1)) }
   },
   methods: {
+
     // dir = +1: go to next page whose precondition is met
     // dir = -1: go to previous page whose precondition is met
     // dir =  0: stay on this page, if its precondition is met else go to the next page whose precondition is met
@@ -100,19 +112,21 @@ export default {
       // form with index idx is currently fulfilled
       var preConditionOkay = (idx) => {
         if (!_.has(this, 'survey')) console.log('uh oh something odd happened :-(')
+
         // if the given form has no precondition or if there is
         // no such form, return true
         if (!_.has(this.survey, 'forms[' + idx + '].pre')) return true
 
         const pre = this.survey.forms[idx].pre
 
-        // Evaluate the precondition(s)
+        // Evaluate the precondition(s):
+        // For an array, the precondition is matched if any of the objects is completely contained in the state
         return _.isArray(pre) ? _.some(pre, (conjunction) => isSubset(conjunction, this.state)) : isSubset(pre, this.state)
       }
 
       let idx = this.state.idx + dir
 
-      // if the idx is to be changed (which is always except at the first page), save the old answers to the state
+      // if the idx is to be changed (which is always except at the first page, when this function is called dir = 0), save the old answers to the state and evaluate the "set"-clauses of the controls to update the state
       if (dir) {
         this.state.answers.$set(this.state.idx, this.answers.length === 1 ? this.answers[0] : this.answers)
 
@@ -134,8 +148,8 @@ export default {
         })
 
         // Assign variables for the selection of the radio button
-        if (this.radioboxes.length > 0 && _.has(this.radioboxes[this.answers[this.checkboxes.length]], 'set')) {
-          _.extend(assignments, this.radioboxes[this.answers[this.checkboxes.length]].set)
+        if (this.radioboxes.length > 0 && _.has(this.radioboxes[this.answers[this.radioAnswerIdx]], 'set')) {
+          _.extend(assignments, this.radioboxes[this.answers[this.radioAnswerIdx]].set)
         }
 
         this.state = _.extend(this.state, assignments)
@@ -170,6 +184,7 @@ export default {
       if (this.textfields.length > 0) { this.answers = _.extend(this.answers, _.map(form.text, (textfield) => textfield.default)) }
     }
   },
+
   created () {
     const source = this.$route.query.source
 
@@ -209,5 +224,129 @@ export default {
 <style scoped>
 h1 {
   color: #42b983;
+}
+</style>
+
+
+<!-- Spinner code taken from https://codepen.io/MattIn4D/pen/LiKFC //-->
+<style>
+/* Absolute Center Spinner */
+.loading {
+  position: fixed;
+  z-index: 999;
+  height: 2em;
+  width: 2em;
+  overflow: show;
+  margin: auto;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+}
+
+/* Transparent Overlay */
+.loading:before {
+  content: '';
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.3);
+}
+
+/* :not(:required) hides these rules from IE9 and below */
+.loading:not(:required) {
+  /* hide "loading..." text */
+  font: 0/0 a;
+  color: transparent;
+  text-shadow: none;
+  background-color: transparent;
+  border: 0;
+}
+
+.loading:not(:required):after {
+  content: '';
+  display: block;
+  font-size: 10px;
+  width: 1em;
+  height: 1em;
+  margin-top: -0.5em;
+  -webkit-animation: spinner 1500ms infinite linear;
+  -moz-animation: spinner 1500ms infinite linear;
+  -ms-animation: spinner 1500ms infinite linear;
+  -o-animation: spinner 1500ms infinite linear;
+  animation: spinner 1500ms infinite linear;
+  border-radius: 0.5em;
+  -webkit-box-shadow: rgba(0, 0, 0, 0.75) 1.5em 0 0 0, rgba(0, 0, 0, 0.75) 1.1em 1.1em 0 0, rgba(0, 0, 0, 0.75) 0 1.5em 0 0, rgba(0, 0, 0, 0.75) -1.1em 1.1em 0 0, rgba(0, 0, 0, 0.5) -1.5em 0 0 0, rgba(0, 0, 0, 0.5) -1.1em -1.1em 0 0, rgba(0, 0, 0, 0.75) 0 -1.5em 0 0, rgba(0, 0, 0, 0.75) 1.1em -1.1em 0 0;
+  box-shadow: rgba(0, 0, 0, 0.75) 1.5em 0 0 0, rgba(0, 0, 0, 0.75) 1.1em 1.1em 0 0, rgba(0, 0, 0, 0.75) 0 1.5em 0 0, rgba(0, 0, 0, 0.75) -1.1em 1.1em 0 0, rgba(0, 0, 0, 0.75) -1.5em 0 0 0, rgba(0, 0, 0, 0.75) -1.1em -1.1em 0 0, rgba(0, 0, 0, 0.75) 0 -1.5em 0 0, rgba(0, 0, 0, 0.75) 1.1em -1.1em 0 0;
+}
+
+/* Animation */
+
+@-webkit-keyframes spinner {
+  0% {
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+@-moz-keyframes spinner {
+  0% {
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+@-o-keyframes spinner {
+  0% {
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+@keyframes spinner {
+  0% {
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
 }
 </style>
