@@ -10,41 +10,38 @@
 
     <p>{{{text | simpleMarkdown}}}</p>
 
-    <div class="ui two column grid container">
-      <div v-if="textfields.length>0" class="one column row">
-        <div v-for="item in textfields" class="column">
-          {{item.label}}
-          <input v-model="answers[$index+textAnswerIdx]" :default="item.default">
+    <form>
+      <div v-if="textfields.length>0">
+        <div v-for="item in textfields" class="row">
+          <label for="'tf' + $index">{{item.label}}</label>
+          <input id="'tf' + $index" type="text" v-model="answers[$index+textAnswerIdx]" :default="item.default">
         </div>
       </div>
-      <div v-if="numberfields.length>0" class="one column row">
-        <div v-for="item in numberfields" class="column">
-          {{item.label}}
-          <div class="ui slider">
-            <div class="handle"></div>
-            <div class="value"></div>
-          </div>
+      <div v-if="numberfields.length>0">
+        <div v-for="item in numberfields" class="row">
+          <label for="'nf' + $index">{{item.label}}</label>
+          <input id="'nf' + $index" type="number" number v-model="answers[$index+textAnswerIdx]" :min="item.min || 0" :max="item.max || 10" :value="item.default || item.min || 1">
         </div>
       </div>
       <div v-if="checkboxes.length>0" class="row">
-        <div v-for="item in checkboxes" class="column">
+        <div v-for="item in checkboxes" class="col-sm-6">
           <toggle-box type="check" :label="item.label" :checked="answers[$index]" v-on:click="this.answers.$set($index, !this.answers[$index])"></toggle-box>
         </div>
       </div>
       <div v-if="radioboxes.length>0" class="row">
-        <div v-for="item in radioboxes" class="column">
+        <div v-for="item in radioboxes" class="col-sm-6">
           <toggle-box type="radio" :label="item.label" :checked="answers[checkboxes.length] == $index" v-on:click="answers.$set(checkboxes.length, $index)"></toggle-box>
         </div>
       </div>
-    </div>
-    <div class="ui two column grid">
-      <div class="left floated column">
+    </form>
+    <div class="row">
+      <div class="col-sm-6">
         <button class="ui left labeled icon button" v-on:click="advancePage(-1)" v-bind:class="{'disabled': !canGoBack}">
           <i class="left arrow icon"></i>
           Back
         </button>
       </div>
-      <div class="right floated column">
+      <div class="col-sm-6">
         <button class="ui right labeled icon button" v-on:click="advancePage(1)" v-bind:class="{'disabled': !canGoNext}" >
           <i class="right arrow icon"></i>
           Next
@@ -174,8 +171,6 @@ export default {
     }
   },
   created () {
-    $('#surveyprogress').progress()
-
     const source = this.$route.query.source
 
     if (_.isUndefined(source) || !_.isString(source) || source === '') {

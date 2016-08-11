@@ -1,9 +1,8 @@
-import '../node_modules/semantic-ui-css/semantic.min.css'
+import 'bootstrap/dist/css/bootstrap.css'
+import 'font-awesome/css/font-awesome.css'
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import App from './App'
-/* eslint-disable no-unused-vars */
-import semantic from 'semantic'
 import Hello from './components/Hello'
 import Survey from './components/Survey'
 

@@ -1,17 +1,17 @@
 <template>
-  <div id="app" class="ui container">
-    <div class="ui top menu">
-      <a class="item">Dashboard</a>
-      <a class="item">Risks</a>
-      <a class="item">Assets</a>
-      <div class="right item">
-        <div class="ui icon input">
-          <input placeholder="Search ..." type="text">
-          <i class="search icon"></i>
-        </div>
-      </div>
-      <a class="item">Login <i class="user icon"></i></a>
-    </div>
+  <div id="app" class="container">
+    <nav class="navbar">
+      <a class="navbar-brand" href="#">Simse</a>
+      <ul class="nav navbar-nav">
+        <li class="nav-item"><a class="nav-link" href="#">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Risks</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Assets</a></li>
+      </ul>
+      <form class="form-inline pull-right">
+        <input class="form-control" type="text" placeholder="Search ...">
+        <button class="btn btn-outline-success" type="submit"><i class="fa fa-search" aria-hidden="true"></i></button>
+      </form>
+    </nav>
 
     <router-view></router-view>
   </div>
