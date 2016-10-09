@@ -2,6 +2,13 @@
 
 > Simple Security
 
+The umpteeth attempt at playing around with JS frameworks to build a
+solid foundation for the simse client.
+
+This time, it's Vue. However, I'm unhappy that FlowType and TypeScript
+cannot easily be made to work with .vue files, so I guess, this won't
+continue right now.
+
 ## Build Setup
 
 ``` bash
